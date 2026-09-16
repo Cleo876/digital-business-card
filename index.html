@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cleon Williams | Digital Card</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            /* Premium light gradient background */
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Hide scrollbar for a cleaner look but allow scrolling if needed */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.08);
+        }
+
+        /* Custom range slider for image editing - Light Mode */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(37,99,235,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(37, 99, 235, 0.2);
+            border-radius: 2px;
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#2563eb', // Blue Accent Primary
+                            accent: '#3b82f6', // Lighter Blue
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            400: '#60a5fa',
+                            600: '#2563eb'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // Standalone exact SVG representations for pure Lucide styling without dependencies
+        const LUCIDE_SVGS = {
+            whatsapp: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>,
+            youtube: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>,
+            github: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>,
+            codeberg: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11.955.49A12 12 0 0 0 0 12.49a12 12 0 0 0 12 12 12 12 12 0 0 0 12-12 12 12 0 0 0-12-12zM8 4.49l7.99 4L8 12.49l7.99 4L8 20.49V4.49z"/></svg>,
+            milanote: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0a12 12 0 1 0 12 12A12.014 12.014 0 0 0 12 0zm5.176 16.326L12 13.882l-5.176 2.444L6 6h2.24l2.124 6.78L12 9.873l1.636 2.906L15.76 6H18z"/></svg>,
+            tiktok: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93v7.2c0 1.25-.19 2.52-.77 3.63-.78 1.48-2.09 2.55-3.64 3.03-1.58.48-3.3.43-4.83-.16-1.74-.68-3.09-2.02-3.76-3.75-.68-1.78-.65-3.83.13-5.59.88-1.95 2.67-3.41 4.75-3.82 1.05-.21 2.14-.19 3.19.06V12.7c-1.39-.41-2.93-.19-4.14.59-.97.62-1.69 1.57-1.96 2.67-.32 1.29-.02 2.69.73 3.79.79 1.15 2.15 1.83 3.53 1.96 1.44.13 2.93-.24 4.02-1.17 1.13-.96 1.77-2.4 1.83-3.9V0h-3.18z"/></svg>,
+            chatgpt: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829a.0804.0804 0 0 1-.0332-.0615V2.7388a4.485 4.485 0 0 1 6.136 1.6464 4.4708 4.4708 0 0 1 .5346 3.0137l-.1416-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0l-5.8428 3.3685v-2.3324a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM12 15.2335a3.2335 3.2335 0 1 1 0-6.467 3.2335 3.2335 0 0 1 0 6.467z"/></svg>,
+            deepseek: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11.996 0A12 12 0 1 0 24 12 12.014 12.014 0 0 0 11.996 0zM17 18.001c-1.353-.18-2.612-.73-3.665-1.613-.807-.678-1.554-1.488-2.274-2.32a.748.748 0 0 1 1.157-.96c.692.802 1.411 1.583 2.193 2.235A6.096 6.096 0 0 0 17 16.516v1.485zm-4.103-6.19a43.518 43.518 0 0 0-2.368 2.656c-1.397 1.704-2.793 3.123-4.992 3.528-.41.077-.751-.43-.518-.769a6.115 6.115 0 0 0 1.258-3.084C6.541 12.637 7 11.127 7.781 9.77a.75.75 0 1 1 1.298.749c-.718 1.246-1.124 2.607-1.351 3.978-.18 1.096-.282 2.378-.601 3.428 1.79-.446 2.934-1.66 4.14-3.13 1.107-1.352 2.277-2.639 3.543-3.832a8.6 8.6 0 0 0 2.247-3.086c.264-.593.456-1.22.612-1.854a.75.75 0 0 1 1.465.337c-.172.716-.39 1.423-.692 2.1-.645 1.442-1.578 2.766-2.695 3.916-1.233 1.268-2.528 2.457-3.85 3.535z"/></svg>,
+            claude: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.478 21.053a15.827 15.827 0 0 1-5.467 1.002c-8.156 0-11.758-5.321-11.758-10.74 0-4.341 2.348-11.06 10.998-11.06 2.894 0 6.07.971 7.828 2.827l.142.15-2.227 2.152-.16-.16c-1.332-1.332-3.642-2.022-5.583-2.022-5.772 0-7.859 4.887-7.859 8.113 0 4.298 2.404 7.783 8.625 7.783 1.87 0 3.79-.425 5.228-1.157l.216-.11 1.547 2.656zM22.067 22H19.06V7.946h3.007z"/></svg>,
+            code: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>,
+            camera: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>,
+            zoomIn: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>,
+            moveHorizontal: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 8 22 12 18 16"/><polyline points="6 8 2 12 6 16"/><line x1="2" y1="12" x2="22" y2="12"/></svg>,
+            moveVertical: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 18 12 22 16 18"/><polyline points="8 6 12 2 16 6"/><line x1="12" y1="2" x2="12" y2="22"/></svg>,
+            x: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            checkCircle: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            sliders: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>,
+            pointer: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 14a8 8 0 0 1-8 8"/><path d="M18 11v-1a2 2 0 0 0-2-2v0a2 2 0 0 0-2-2v0a2 2 0 0 0-2-2v0a2 2 0 0 0-2-2h0a2 2 0 0 0-2 2v0a2 2 0 0 0-2 2v0a2 2 0 0 0-2 2v0a2 2 0 0 0-2 2"/><path d="M14 14.5c0-1.5-3-3-3-3l-2-2"/></svg>,
+            instagram: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>,
+            twitter: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>,
+            linkedin: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>,
+            facebook: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>,
+            globe: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>,
+            fileText: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>,
+            mail: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>,
+            link: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>,
+            phone: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>,
+            plus: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>,
+            trash: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        };
+
+        const DB_NAME = 'DigitalCardDB';
+        const STORE_NAME = 'appData';
+
+        const initDB = () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                request.onupgradeneeded = (e) => {
+                    e.target.result.createObjectStore(STORE_NAME);
+                };
+            });
+        };
+
+        const dbGet = async (key) => {
+            try {
+                const db = await initDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const store = tx.objectStore(STORE_NAME);
+                    const request = store.get(key);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => resolve(null);
+                });
+            } catch (e) {
+                return null;
+            }
+        };
+
+        const dbSet = async (key, val) => {
+            try {
+                const db = await initDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    const request = store.put(val, key);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => resolve();
+                });
+            } catch (e) { }
+        };
+
+        const INITIAL_DATA = {
+            name: "Cleon Williams",
+            titles: [
+                { role: "Tech Philanthropist", brand: "Forge™" },
+                { role: "Industry Coach", brand: "F.R.A.S Media Academy" },
+                { role: "3D Animator", brand: "Final Render Studio®" }
+            ],
+            profilePic: "https://placehold.co/400x400/2563eb/ffffff?text=CW", 
+            picSettings: { scale: 1, x: 50, y: 50 }
+        };
+
+        const INITIAL_LINKS_DATA = [
+            { 
+                id: 'whatsapp', category: "Direct Contact", title: "WhatsApp", url: "https://wa.link/bs6aym", 
+                iconName: "whatsapp", color: "#25D366", iconBg: "#ffffff", iconColor: "#25D366" 
+            },
+            { 
+                id: 'youtube', category: "Creative Works", title: "Animated Film", url: "https://youtu.be/o_vGrsuxoKQ?si=3Dg4DRGOjg_oGVAq", 
+                iconName: "youtube", color: "#dc2626", iconBg: "#dc2626", iconColor: "#ffffff"
+            },
+            { 
+                id: 'forge', category: "Open Source", title: "Forge™ Suite", url: "https://cleo876.github.io/Forge-Suite-", 
+                iconName: "code", color: "#0f172a", iconBg: "#ffffff", iconColor: "#0f172a" 
+            }
+        ];
+
+        const QRCodeCard = ({ link, onEnlarge, onEdit, isEditMode }) => {
+            const [qrImage, setQrImage] = useState(null);
+            
+            useEffect(() => {
+                let isMounted = true;
+
+                // 1. Generate off-screen at massive resolution
+                const qrCode = new QRCodeStyling({
+                    width: 1200, 
+                    height: 1200,
+                    type: "canvas", // Use canvas for perfect PNG snapshotting
+                    data: link.url,
+                    margin: 0,
+                    qrOptions: { 
+                        typeNumber: 0, 
+                        mode: "Byte", 
+                        errorCorrectionLevel: "H" // Max correction for center icon
+                    },
+                    dotsOptions: { 
+                        type: "rounded", 
+                        color: link.color
+                    },
+                    backgroundOptions: { 
+                        color: "transparent" 
+                    },
+                    cornersSquareOptions: { 
+                        type: "extra-rounded", 
+                        color: link.color 
+                    },
+                    cornersDotOptions: { 
+                        type: "dot", 
+                        color: link.color 
+                    }
+                });
+
+                // 2. Take a PNG snapshot and convert to a local Object URL
+                qrCode.getRawData("png").then((blob) => {
+                    if (isMounted && blob) {
+                        setQrImage(URL.createObjectURL(blob));
+                    }
+                }).catch(err => console.error("Snapshot failed:", err));
+
+                return () => { isMounted = false; };
+            }, [link]);
+
+            return (
+                <div 
+                    onClick={() => isEditMode ? onEdit(link) : onEnlarge(link)}
+                    className="glass-panel rounded-2xl p-3 flex flex-col items-center justify-start cursor-pointer hover:bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 group text-center border-white/60 min-h-[140px] relative mt-auto"
+                >
+                    {isEditMode && (
+                        <div className="absolute top-1 right-1 bg-brand-500 text-white p-1.5 rounded-full shadow-md z-20 scale-75 group-hover:scale-100 transition-transform">
+                            <span className="w-3 h-3 block">{LUCIDE_SVGS.sliders}</span>
+                        </div>
+                    )}
+                    <div className="relative mb-3 mt-1 group-hover:scale-105 transition-transform duration-300 bg-white rounded-xl p-1.5 shadow-sm inline-block w-full max-w-[110px] mx-auto">
+                        <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden">
+                            {/* 3. Render the static flawless PNG snapshot */}
+                            {qrImage ? (
+                                <img src={qrImage} alt="QR Code" className="absolute inset-0 w-full h-full object-contain" />
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-50 text-gray-300 animate-pulse rounded-lg"></div>
+                            )}
+                            
+                            {/* Pure AABB centered icon overlay */}
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.12)] border border-gray-50 flex items-center justify-center z-10" style={{ backgroundColor: link.iconBg || '#ffffff', color: link.iconColor || link.color }}>
+                                <div className="w-4 h-4 flex items-center justify-center">
+                                    {React.cloneElement(LUCIDE_SVGS[link.iconName] || LUCIDE_SVGS.link, { width: "100%", height: "100%" })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col justify-center min-w-0 w-full mt-auto">
+                        <h3 className="font-bold text-[11px] sm:text-xs leading-tight text-gray-900 mb-1 line-clamp-2">{link.title}</h3>
+                        <p className="text-[8px] sm:text-[9px] text-brand-500 font-bold uppercase tracking-wider truncate w-full">{link.category}</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const AvatarEditor = ({ image, settings, onUpdate, isEditMode }) => {
+            const fileInputRef = useRef(null);
+
+            const handleImageChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        onUpdate({ profilePic: event.target.result });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            return (
+                <div className="flex flex-col items-center mb-5 relative">
+                    <div className="relative group">
+                        <div 
+                            className="w-32 h-32 rounded-full border-4 border-white shadow-[0_4px_20px_rgba(37,99,235,0.15)] overflow-hidden bg-white"
+                            style={{
+                                backgroundImage: `url(${image})`,
+                                backgroundSize: `${settings.scale * 100}%`,
+                                backgroundPosition: `${settings.x}% ${settings.y}%`,
+                                backgroundRepeat: 'no-repeat'
+                            }}
+                        ></div>
+                        
+                        {isEditMode && (
+                            <button 
+                                onClick={() => fileInputRef.current.click()}
+                                className="absolute bottom-0 right-0 bg-brand-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-brand-600 transition"
+                                title="Change Photo"
+                            >
+                                <span className="w-5 h-5">{LUCIDE_SVGS.camera}</span>
+                            </button>
+                        )}
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={handleImageChange}
+                        />
+                    </div>
+
+                    {/* Cropping Controls (Only in Edit Mode) */}
+                    {isEditMode && (
+                        <div className="mt-4 glass-panel p-4 rounded-xl w-full max-w-xs space-y-3">
+                            <p className="text-xs text-center text-gray-500 font-semibold mb-2">Adjust Crop</p>
+                            <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 text-gray-400">{LUCIDE_SVGS.zoomIn}</span>
+                                <input 
+                                    type="range" min="50" max="300" 
+                                    value={settings.scale * 100} 
+                                    onChange={(e) => onUpdate({ picSettings: { ...settings, scale: e.target.value / 100 }})} 
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 text-gray-400">{LUCIDE_SVGS.moveHorizontal}</span>
+                                <input 
+                                    type="range" min="0" max="100" 
+                                    value={settings.x} 
+                                    onChange={(e) => onUpdate({ picSettings: { ...settings, x: e.target.value }})} 
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 text-gray-400">{LUCIDE_SVGS.moveVertical}</span>
+                                <input 
+                                    type="range" min="0" max="100" 
+                                    value={settings.y} 
+                                    onChange={(e) => onUpdate({ picSettings: { ...settings, y: e.target.value }})} 
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const StaticTitles = ({ titles }) => {
+            return (
+                <div className="flex flex-row items-stretch justify-center w-full gap-2 mt-4 mb-8 px-2 max-w-md">
+                    {titles.map((t, idx) => (
+                        <div key={idx} className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-brand-50/80 border border-brand-100 shadow-sm text-center min-w-0">
+                            <h2 className="text-[10px] sm:text-[11px] font-bold text-gray-900 leading-tight mb-1 w-full line-clamp-2">
+                                {t.role}
+                            </h2>
+                            <span className="text-[8px] sm:text-[9px] font-semibold tracking-wider text-brand-500 uppercase leading-tight line-clamp-2 w-full">
+                                {t.brand}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const QRModal = ({ link, onClose }) => {
+            const [qrImage, setQrImage] = useState(null);
+
+            useEffect(() => {
+                let isMounted = true;
+                if (link) {
+                    // Generate massive off-screen version
+                    const qrCode = new QRCodeStyling({
+                        width: 1200,
+                        height: 1200,
+                        type: "canvas", 
+                        data: link.url,
+                        margin: 0,
+                        qrOptions: { 
+                            typeNumber: 0, 
+                            mode: "Byte", 
+                            errorCorrectionLevel: "H" 
+                        },
+                        dotsOptions: { 
+                            type: "rounded", 
+                            color: link.color 
+                        },
+                        backgroundOptions: { 
+                            color: "#ffffff" 
+                        },
+                        cornersSquareOptions: { 
+                            type: "extra-rounded", 
+                            color: link.color 
+                        },
+                        cornersDotOptions: { 
+                            type: "dot", 
+                            color: link.color 
+                        }
+                    });
+
+                    // Snapshot to PNG
+                    qrCode.getRawData("png").then((blob) => {
+                        if (isMounted && blob) {
+                            setQrImage(URL.createObjectURL(blob));
+                        }
+                    }).catch(err => console.error("Modal Snapshot failed:", err));
+                }
+                return () => { isMounted = false; };
+            }, [link]);
+
+            if (!link) return null;
+
+            return (
+                <div 
+                    className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md"
+                    onClick={onClose}
+                >
+                    <div 
+                        className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center transform transition-all animate-[popIn_0.3s_ease-out] border border-white max-w-sm w-full"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.05)] border border-gray-100" style={{ backgroundColor: link.iconBg || '#f8fafc', color: link.iconColor || link.color }}>
+                             <div className="w-10 h-10">{LUCIDE_SVGS[link.iconName] || LUCIDE_SVGS.link}</div>
+                        </div>
+                        
+                        <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center">{link.title}</h2>
+                        <p className="text-gray-500 mb-8 text-center text-sm font-medium tracking-wide break-words max-w-[280px]">{link.url.replace(/^https?:\/\//, '')}</p>
+                        
+                        <div className="shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] rounded-2xl overflow-hidden p-4 bg-white border border-gray-100 mb-2">
+                            <div className="relative w-[240px] h-[240px] flex items-center justify-center overflow-hidden">
+                                
+                                {/* Render the flawless scaled-down PNG snapshot */}
+                                {qrImage ? (
+                                    <img src={qrImage} alt="Enlarged QR Code" className="absolute inset-0 w-full h-full object-contain" />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 text-gray-300 animate-pulse rounded-2xl"></div>
+                                )}
+                                
+                                {/* AABB Centered Icon Overlay */}
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[56px] h-[56px] rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-gray-50 flex items-center justify-center z-10" style={{ backgroundColor: link.iconBg || '#ffffff', color: link.iconColor || link.color }}>
+                                    <div className="w-8 h-8 flex items-center justify-center">
+                                        {React.cloneElement(LUCIDE_SVGS[link.iconName] || LUCIDE_SVGS.link, { width: "100%", height: "100%" })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p className="mt-6 text-gray-400 text-sm font-semibold tracking-widest uppercase animate-pulse">
+                            Ready to Scan
+                        </p>
+                    </div>
+
+                    <button 
+                        className="absolute top-6 right-6 text-gray-800 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.1)] hover:scale-105 p-3 rounded-full transition-all"
+                        onClick={onClose}
+                    >
+                        <span className="w-6 h-6 block">{LUCIDE_SVGS.x}</span>
+                    </button>
+                    
+                    <style>{`
+                        @keyframes popIn {
+                            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+                            100% { opacity: 1; transform: scale(1) translateY(0); }
+                        }
+                    `}</style>
+                </div>
+            );
+        };
+
+        const LinkEditorModal = ({ link, onSave, onClose, onDelete }) => {
+            const [formData, setFormData] = useState(link || {
+                id: Date.now().toString(),
+                category: 'New Category',
+                title: 'New Link',
+                url: 'https://',
+                iconName: 'link',
+                color: '#2563eb',
+                iconBg: '#ffffff',
+                iconColor: '#2563eb'
+            });
+
+            // Toggle logic for "Solid Background" (like YouTube)
+            const [invertColors, setInvertColors] = useState(formData.iconBg !== '#ffffff' && formData.iconBg === formData.color);
+
+            useEffect(() => {
+                if (invertColors) {
+                    setFormData(f => ({ ...f, iconBg: f.color, iconColor: '#ffffff' }));
+                } else {
+                    setFormData(f => ({ ...f, iconBg: '#ffffff', iconColor: f.color }));
+                }
+            }, [invertColors, formData.color]);
+
+            return (
+                <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto" onClick={onClose}>
+                    <div className="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm flex flex-col gap-4 border border-white/50" onClick={e=>e.stopPropagation()}>
+                        
+                        <div className="flex justify-between items-center mb-2">
+                            <h2 className="text-xl font-bold text-gray-900">{link ? 'Edit Link' : 'Add New Link'}</h2>
+                            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-800 bg-gray-50 rounded-full transition-colors">
+                                <span className="w-5 h-5 block">{LUCIDE_SVGS.x}</span>
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-brand-500 tracking-wider mb-1 block">Title</label>
+                                <input className="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none transition-all" value={formData.title} onChange={e=>setFormData({...formData, title: e.target.value})} placeholder="e.g. Animated Film" />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-brand-500 tracking-wider mb-1 block">Subtitle / Category</label>
+                                <input className="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none transition-all" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})} placeholder="e.g. Creative Works" />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-brand-500 tracking-wider mb-1 block">Destination URL</label>
+                                <input className="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none transition-all" value={formData.url} onChange={e=>setFormData({...formData, url: e.target.value})} placeholder="https://" />
+                            </div>
+                        </div>
+                        
+                        <div className="mt-2">
+                            <label className="text-[10px] uppercase font-bold text-brand-500 tracking-wider mb-2 block">Choose Icon</label>
+                            <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto p-1 scrollbar-thin">
+                                {Object.keys(LUCIDE_SVGS).filter(k => k !== 'x' && k !== 'sliders' && k !== 'pointer' && k !== 'zoomIn' && k !== 'moveHorizontal' && k !== 'moveVertical' && k !== 'camera' && k !== 'checkCircle' && k !== 'plus' && k !== 'trash').map(icon => (
+                                    <button key={icon} onClick={() => setFormData({...formData, iconName: icon})} className={`p-2 rounded-xl flex items-center justify-center border transition-all ${formData.iconName === icon ? 'border-brand-500 bg-brand-50 text-brand-500 shadow-sm' : 'border-gray-100 bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>
+                                        <div className="w-5 h-5">{React.cloneElement(LUCIDE_SVGS[icon], { width: "100%", height: "100%" })}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-3 mt-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-gray-700">Theme Color</label>
+                                <input type="color" value={formData.color} onChange={e=>setFormData({...formData, color: e.target.value})} className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 p-0" />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-gray-700">Solid Icon Fill</label>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input type="checkbox" className="sr-only peer" checked={invertColors} onChange={e=>setInvertColors(e.target.checked)} />
+                                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-500"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-4">
+                            {link && (
+                                <button onClick={onDelete} className="flex flex-col items-center justify-center p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors">
+                                    <span className="w-5 h-5 block">{LUCIDE_SVGS.trash}</span>
+                                </button>
+                            )}
+                            <button onClick={() => onSave(formData)} className="flex-1 bg-brand-500 text-white font-bold py-3 rounded-xl shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:bg-brand-600 transition-all active:scale-[0.98]">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        const App = () => {
+            const [mode, setMode] = useState('present'); 
+            const [profileData, setProfileData] = useState(INITIAL_DATA);
+            const [linksData, setLinksData] = useState(INITIAL_LINKS_DATA);
+            const [focusedQR, setFocusedQR] = useState(null);
+            const [editingLink, setEditingLink] = useState(null); 
+            const pressTimer = useRef(null);
+
+            useEffect(() => {
+                // Silently load from database in the background
+                dbGet('profile').then(data => { if (data) setProfileData(data); });
+                dbGet('links').then(data => { if (data) setLinksData(data); });
+            }, []);
+
+            const handleUpdateProfile = (newData) => {
+                const updated = { ...profileData, ...newData };
+                setProfileData(updated);
+                dbSet('profile', updated);
+            };
+
+            const handleUpdateLinks = (newLinks) => {
+                setLinksData(newLinks);
+                dbSet('links', newLinks);
+            };
+
+            const handlePressStart = () => {
+                pressTimer.current = setTimeout(() => {
+                    setMode(prev => prev === 'present' ? 'edit' : 'present');
+                    // Optional: trigger subtle physical vibration on devices that support it
+                    if (navigator.vibrate) navigator.vibrate(50);
+                }, 1000);
+            };
+
+            const handlePressEnd = () => {
+                if (pressTimer.current) clearTimeout(pressTimer.current);
+            };
+            
+            // Group links dynamically by their custom category string
+            const groupedLinks = useMemo(() => {
+                return linksData.reduce((acc, link) => {
+                    const cat = (link.category || 'Other Links').trim();
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat].push(link);
+                    return acc;
+                }, {});
+            }, [linksData]);
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-start pt-10 pb-20 px-4 relative">
+                    
+                    <div className="w-full max-w-md flex flex-col items-center relative z-0 mt-4">
+                        {/* Profile Section */}
+                        <AvatarEditor 
+                            image={profileData.profilePic} 
+                            settings={profileData.picSettings} 
+                            onUpdate={handleUpdateProfile}
+                            isEditMode={mode === 'edit'}
+                        />
+
+                        {/* Secret gesture bound to the name */}
+                        <h1 
+                            className="text-3xl md:text-4xl font-bold tracking-tight mb-1 text-gray-900 drop-shadow-sm text-center cursor-pointer select-none touch-action-manipulation"
+                            onTouchStart={handlePressStart}
+                            onTouchEnd={handlePressEnd}
+                            onMouseDown={handlePressStart}
+                            onMouseUp={handlePressEnd}
+                            onMouseLeave={handlePressEnd}
+                            title="Long press to edit"
+                        >
+                            {profileData.name}
+                        </h1>
+
+                        {/* Invisible in Present Mode, gives owner feedback in Edit Mode */}
+                        {mode === 'edit' && (
+                            <span className="text-[10px] text-brand-500 font-semibold uppercase tracking-widest mb-2 animate-pulse">
+                                Long press name to lock
+                            </span>
+                        )}
+
+                        <StaticTitles titles={profileData.titles} />
+
+                        {mode === 'present' && (
+                            <div className="mb-6 text-center text-gray-500 text-sm flex items-center justify-center gap-2 transition-all">
+                                <span className="w-4 h-4">{LUCIDE_SVGS.pointer}</span>
+                                Tap any card to enlarge QR code
+                            </div>
+                        )}
+
+                        <div className="w-full px-1 flex flex-col gap-6">
+                            {/* Dynamically render sections based on user categories */}
+                            {Object.entries(groupedLinks).map(([categoryName, categoryLinks]) => (
+                                <div key={categoryName} className="w-full flex flex-col items-center">
+                                    <div className="w-full flex items-center justify-center mb-4 mt-2">
+                                        <div className="h-px bg-gray-200 flex-1"></div>
+                                        <span className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{categoryName}</span>
+                                        <div className="h-px bg-gray-200 flex-1"></div>
+                                    </div>
+                                    <div className="w-full grid grid-cols-3 gap-3">
+                                        {categoryLinks.map(link => (
+                                            <QRCodeCard 
+                                                key={link.id} 
+                                                link={link} 
+                                                onEnlarge={setFocusedQR} 
+                                                onEdit={(l) => setEditingLink(l)}
+                                                isEditMode={mode === 'edit'}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Dynamic Add Button (Always at the absolute bottom during Edit Mode) */}
+                            {mode === 'edit' && (
+                                <div className="w-full flex flex-col items-center mt-2">
+                                    {Object.keys(groupedLinks).length === 0 && (
+                                         <div className="w-full flex items-center justify-center mb-4 mt-2">
+                                             <div className="h-px bg-gray-200 flex-1"></div>
+                                             <span className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">New Links</span>
+                                             <div className="h-px bg-gray-200 flex-1"></div>
+                                         </div>
+                                    )}
+                                    <div className="w-full grid grid-cols-3 gap-3">
+                                        <div 
+                                            onClick={() => setEditingLink({
+                                                id: Date.now().toString(), category: 'New Category', title: 'New Link', 
+                                                url: 'https://', iconName: 'link', color: '#2563eb', 
+                                                iconBg: '#ffffff', iconColor: '#2563eb'
+                                            })}
+                                            className="glass-panel rounded-2xl p-3 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 border-white/60 min-h-[140px] border-dashed border-2 border-brand-200 bg-brand-50/30"
+                                        >
+                                            <div className="w-10 h-10 text-brand-400 mb-2 flex items-center justify-center bg-white rounded-full shadow-sm">
+                                                <span className="w-5 h-5 block">{LUCIDE_SVGS.plus}</span>
+                                            </div>
+                                            <h3 className="font-bold text-xs text-brand-600">Add Link</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Full Screen Focus Mode Modal */}
+                    <QRModal 
+                        link={focusedQR} 
+                        onClose={() => setFocusedQR(null)} 
+                    />
+
+                    {/* Editor Modal for Adding/Editing Links */}
+                    {editingLink && (
+                        <LinkEditorModal 
+                            link={editingLink.id && linksData.find(l => l.id === editingLink.id) ? editingLink : null}
+                            onSave={(savedLink) => {
+                                let newLinks;
+                                if (linksData.find(l => l.id === savedLink.id)) {
+                                    newLinks = linksData.map(l => l.id === savedLink.id ? savedLink : l);
+                                } else {
+                                    newLinks = [...linksData, savedLink];
+                                }
+                                handleUpdateLinks(newLinks);
+                                setEditingLink(null);
+                            }}
+                            onDelete={() => {
+                                const newLinks = linksData.filter(l => l.id !== editingLink.id);
+                                handleUpdateLinks(newLinks);
+                                setEditingLink(null);
+                            }}
+                            onClose={() => setEditingLink(null)}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
